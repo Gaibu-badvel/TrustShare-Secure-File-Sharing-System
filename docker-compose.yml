@@ -1,0 +1,49 @@
+# Full stack:  docker compose up --build     (frontend :3000, API :8000, docs :8000/docs)
+# Databases only (for local dev): docker compose up -d postgres mongo redis
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment: { POSTGRES_USER: trustshare, POSTGRES_PASSWORD: trustshare, POSTGRES_DB: trustshare }
+    volumes: [pgdata:/var/lib/postgresql/data]
+    ports: ["5432:5432"]
+    healthcheck: { test: ["CMD-SHELL", "pg_isready -U trustshare"], interval: 5s, retries: 10 }
+  mongo:
+    image: mongo:7
+    volumes: [mongodata:/data/db]
+    ports: ["27017:27017"]
+  redis:
+    image: redis:7-alpine
+    ports: ["6379:6379"]
+  backend:
+    build: ./backend
+    depends_on: { postgres: { condition: service_healthy }, mongo: { condition: service_started }, redis: { condition: service_started } }
+    environment:
+      ENV: ${ENV:-development}
+      DATABASE_URL: postgresql+psycopg2://trustshare:trustshare@postgres:5432/trustshare
+      MONGO_URL: mongodb://mongo:27017
+      REDIS_URL: redis://redis:6379/0
+      AUTO_CREATE_TABLES: "false"
+      JWT_SECRET: ${JWT_SECRET:-dev-only-secret-change-me-0123456789abcdef0123456789abcdef}
+      MASTER_KEYS: ${MASTER_KEYS:-}
+      ADMIN_EMAIL: ${ADMIN_EMAIL:-}
+      FRONTEND_URL: http://localhost:3000
+      BACKEND_URL: http://localhost:8000
+      CORS_ORIGINS: http://localhost:3000
+      STORAGE_BACKEND: ${STORAGE_BACKEND:-local}
+      S3_BUCKET: ${S3_BUCKET:-}
+      S3_REGION: ${S3_REGION:-us-east-1}
+      AZURE_CONNECTION_STRING: ${AZURE_CONNECTION_STRING:-}
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
+      GITHUB_CLIENT_ID: ${GITHUB_CLIENT_ID:-}
+      GITHUB_CLIENT_SECRET: ${GITHUB_CLIENT_SECRET:-}
+    volumes: [appdata:/app/data]    # dev key file, local encrypted storage, mail outbox
+    ports: ["8000:8000"]
+  frontend:
+    build: { context: ./frontend, args: { NEXT_PUBLIC_API_URL: "http://localhost:8000" } }
+    depends_on: [backend]
+    ports: ["3000:3000"]
+volumes: { pgdata: {}, mongodata: {}, appdata: {} }
