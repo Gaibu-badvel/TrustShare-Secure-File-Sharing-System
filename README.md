@@ -68,3 +68,4 @@ Rotation: Admin → Keys (re-wrap all data keys under a new master key, or re-en
 * Files are encrypted/decrypted in memory (spec design), so very large files are bounded by `MAX_UPLOAD_MB` (default 50).
 * S3/Azure backends use the official SDKs but were not exercised against live cloud accounts here; local storage, SQLite and PostgreSQL were.
 * Google/GitHub OAuth flow is tested with the provider calls mocked; you need your own client credentials for the real thing.
+  |[image alt](https://github.com/Gaibu-badvel/TrustShare-Secure-File-Sharing-System/blob/637c0fdc050fd644d782b8d682436cf24d8a4a09/downloadfile(35).PDF)
